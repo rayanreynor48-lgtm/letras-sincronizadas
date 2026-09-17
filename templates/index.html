@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letras Sincronizadas SRT</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+        :root{--c1:#0ff;--c2:#f0f;--fondo1:#050510;--fondo2:#1a1a3f;--tarjeta:rgba(20,20,60,.6);--btn-verde:#096}
+        body{
+            min-height:100vh;
+            background:linear-gradient(135deg,var(--fondo1) 0%,var(--fondo2) 50%,#0f2040 100%);
+            color:#eef;
+            padding:2rem;
+        }
+        .contenedor{max-width:1000px;margin:0 auto}
+        h1{
+            text-align:center;
+            font-size:2.4rem;
+            margin-bottom:.3rem;
+            background:linear-gradient(90deg,var(--c1),var(--c2));
+            -webkit-background-clip:text;
+            color:transparent;
+        }
+        .sub{text-align:center;color:#9cf;margin-bottom:2rem}
+        
+        /* BUSQUEDA PRINCIPAL */
+        .buscador{position:relative;margin-bottom:2.5rem}
+        .buscador input{
+            width:100%;padding:1.1rem 1.5rem 1.1rem 3.5rem;border-radius:50px;border:none;
+            background:rgba(30,40,80,.8);color:#fff;font-size:1.1rem;
+            border:2px solid transparent;transition:all .3s;
+        }
+        .buscador input:focus{
+            outline:none;border-color:var(--c1);
+            box-shadow:0 0 20px rgba(0,255,255,.3)
+        }
+        .buscador::before{
+            content:"🔍";position:absolute;left:1.2rem;top:50%;transform:translateY(-50%);
+            font-size:1.2rem;pointer-events:none
+        }
+        
+        /* SECCIONES */
+        .seccion{margin-bottom:3rem}
+        h2{color:var(--c1);margin-bottom:1rem;font-size:1.2rem;display:flex;align-items:center;gap:.5rem}
+        .tarjeta{
+            background:var(--tarjeta);border-radius:16px;padding:1.5rem;
+            border:1px solid rgba(0,255,255,.2);backdrop-filter:blur(10px);
+        }
+        
+        /* CANCIONES — CORREGIDO */
+        .lista{display:grid;gap:.8rem}
+        .cancion{
+            display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center;
+            padding:1rem 1.2rem;border-radius:12px;
+            background:rgba(40,50,100,.4);border:1px solid rgba(100,150,255,.15);
+            transition:all .2s
+        }
+        .cancion:hover{border-color:rgba(0,255,255,.4);transform:translateX(5px)}
+        .cancion .datos{overflow:hidden}
+        .cancion .datos strong{font-size:1rem;color:#fff;display:block;line-height:1.4}
+        .cancion .datos span{
+            color:#9bc;font-size:.85rem;display:block;margin-top:.2rem;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:650px
+        }
+        .btn-descargar{
+            padding:.6rem 1.2rem;border-radius:8px;text-decoration:none;font-weight:bold;font-size:.9rem;
+            background:var(--btn-verde);color:#fff;white-space:nowrap;
+            display:inline-flex;align-items:center;gap:.5rem;flex-shrink:0
+        }
+        .btn-descargar:hover{background:#0a7;transform:scale(1.03)}
+        
+        /* BOTS */
+        .caja-api{
+            background:rgba(30,30,80,.5);border-radius:12px;padding:1.5rem;
+            border:1px dashed #68f;font-size:.9rem
+        }
+        code{background:rgba(0,0,0,.5);padding:.5rem .8rem;border-radius:6px;color:#9fc;display:block;margin:.8rem 0;word-break:break-all}
+        .vacio{text-align:center;color:#789;padding:2rem}
+        .oculto{display:none}
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>🎵 Letras Sincronizadas SRT</h1>
+        <p class="sub">Busca por artista, canción o palabras clave — descarga el archivo</p>
+
+        <!-- BARRA DE BÚSQUEDA -->
+        <div class="buscador">
+            <input type="text" id="busqueda" placeholder="Ej: DI BOWNS, SARCASMO, GANGRENA MENTAL..." autocomplete="off">
+        </div>
+
+        <!-- RECOMENDACIONES -->
+        <div class="seccion" id="zona-recomendadas">
+            <h2>✨ Recomendaciones</h2>
+            <div class="tarjeta lista" id="recomendadas">
+                {% if recomendaciones %}
+                    {% for c in recomendaciones %}
+                    <div class="cancion">
+                        <div class="datos">
+                            <strong>{{ c.artista_original }}</strong>
+                            <span>{{ c.cancion_original }}</span>
+                        </div>
+                        <a href="{{ c.ruta }}" class="btn-descargar" download="{{ c.archivo }}">⬇️ Descargar</a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="vacio">No hay canciones guardadas</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RESULTADOS DE BÚSQUEDA -->
+        <div class="seccion oculto" id="zona-resultados">
+            <h2 id="titulo-busqueda">Resultados</h2>
+            <div class="tarjeta lista" id="resultados"></div>
+        </div>
+
+        <!-- TODAS LAS CANCIONES -->
+        <div class="seccion">
+            <h2>📚 Catálogo completo — {{ canciones|length }} archivos</h2>
+            <div class="tarjeta lista" id="todas-lista">
+                {% if canciones %}
+                    {% for c in canciones %}
+                    <div class="cancion">
+                        <div class="datos">
+                            <strong>{{ c.artista_original }}</strong>
+                            <span>{{ c.cancion_original }}</span>
+                        </div>
+                        <a href="{{ c.ruta }}" class="btn-descargar" download="{{ c.archivo }}">⬇️ {{ c.archivo }}</a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="vacio">No hay archivos en la carpeta</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ACCESO PARA BOTS -->
+        <div class="seccion">
+            <h2>🤖 Para Bots / Python</h2>
+            <div class="caja-api">
+                <strong>1. Listar todo:</strong>
+                <code>GET http://127.0.0.1:5000/api/lista</code>
+                
+                <strong>2. Buscar por nombre o artista:</strong>
+                <code>GET http://127.0.0.1:5000/api/buscar?q=DI BOWNS</code>
+                <code>GET http://127.0.0.1:5000/api/buscar?q=SARCASMO</code>
+                
+                <strong>3. Descargar el archivo:</strong>
+                <code>GET http://127.0.0.1:5000/descargar/NOMBRE_ARCHIVO.srt</code>
+                
+                <strong>🐍 Código Python completo:</strong>
+                <code>import requests
+
+BASE = "http://127.0.0.1:5000"
+
+# 🔍 Buscar
+consulta = "SARCASMO SIN AUTOTUNE"
+resp = requests.get(f"{BASE}/api/buscar?q={consulta}")
+datos = resp.json()
+
+if datos["encontrados"] > 0:
+    cancion = datos["resultados"][0]
+    print(f"✅ Encontrado: {cancion['artista_original']} — {cancion['cancion_original']}")
+    
+    # ⬇️ Descargar
+    descarga = requests.get(f"{BASE}{cancion['ruta']}")
+    with open(cancion["archivo"], "wb") as f:
+        f.write(descarga.content)
+    print(f"💾 Guardado como: {cancion['archivo']}")
+else:
+    print("❌ No encontrado")</code>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const busqueda = document.getElementById('busqueda');
+        const zonaResultados = document.getElementById('zona-resultados');
+        const tituloBusqueda = document.getElementById('titulo-busqueda');
+        const cajaResultados = document.getElementById('resultados');
+        const zonaRecomendadas = document.getElementById('zona-recomendadas');
+
+        async function ejecutarBusqueda(texto){
+            if(!texto.trim()){
+                zonaResultados.classList.add('oculto');
+                zonaRecomendadas.classList.remove('oculto');
+                return;
+            }
+            const res = await fetch(`/api/buscar?q=${encodeURIComponent(texto)}`);
+            const datos = await res.json();
+            
+            zonaRecomendadas.classList.add('oculto');
+            zonaResultados.classList.remove('oculto');
+            tituloBusqueda.textContent = datos.consulta 
+                ? `🔍 Resultados para: "${datos.consulta}" (${datos.encontrados} encontrados)` 
+                : 'Resultados';
+            
+            if(datos.encontrados === 0){
+                cajaResultados.innerHTML = '<p class="vacio">No se encontró — intenta con parte del nombre</p>';
+                return;
+            }
+            
+            cajaResultados.innerHTML = datos.resultados.map(c => `
+                <div class="cancion">
+                    <div class="datos">
+                        <strong>${c.artista_original}</strong>
+                        <span>${c.cancion_original}</span>
+                    </div>
+                    <a href="${c.ruta}" class="btn-descargar" download="${c.archivo}">⬇️ Descargar</a>
+                </div>
+            `).join('');
+        }
+
+        let temporizador;
+        busqueda.addEventListener('input', e => {
+            clearTimeout(temporizador);
+            temporizador = setTimeout(() => ejecutarBusqueda(e.target.value), 300);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+*.pyc
+srt_descargados/
+archivos_mp3/
+*.mp3
+*.wav
+.DS_Store
