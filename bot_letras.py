@@ -12,7 +12,7 @@ except ImportError:
     print("[AVISO] pygame no instalado. Ejecuta: pip install pygame")
 
 # CONFIGURACION
-BASE_URL = "http://127.0.0.1:5000"
+BASE_URL = "https://letras-sincronizadas.onrender.com"
 CARPETA_SRT_DESCARGA = Path(__file__).parent / "srt_descargados"
 CARPETA_SRT_DESCARGA.mkdir(exist_ok=True)
 
